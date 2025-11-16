@@ -1,4 +1,4 @@
-﻿name: CI — Build frontend + backend (verbose)
+﻿name: CI — frontend + backend (verbose)
 
 on:
   push:
@@ -8,37 +8,50 @@ on:
 
 jobs:
   build:
+    name: build
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
 
-      - name: Show GitHub runner info
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Runner & Node info
         run: |
-          echo "Runner: "
+          echo "Runner OS: "
           node -v
           npm -v
-          echo "Listing repo root"
+          echo "Repo root listing:"
           ls -la
+
+      - name: Frontend - list files & show package.json
+        working-directory: frontend
+        run: |
+          echo "PWD: C:\Users\Friends\Documents\online-learning-platform"
+          echo "Listing frontend folder:"
+          ls -la
+          if [ -f package.json ]; then echo "package.json:"; cat package.json; fi
+          if [ -f package-lock.json ]; then echo "package-lock.json exists"; fi
 
       - name: Build frontend (Vite)
         working-directory: frontend
         run: |
-          echo "PWD: C:\Users\Friends\Documents\online-learning-platform"
-          echo "Listing frontend dir"
-          ls -la
-          if [ -f package-lock.json ]; then echo "Using npm ci"; npm ci || npm install; else npm install; fi
-          echo "package.json:"
-          cat package.json
+          # install reproducibly when lockfile exists, otherwise fallback
+          if [ -f package-lock.json ]; then npm ci || npm install; else npm install; fi
           npm run build
 
-      - name: Show frontend/dist contents
+      - name: Show frontend/dist (if any)
         run: |
-          echo "dist exists:"
+          echo "frontend/dist contents (if present):"
           ls -la frontend/dist || true
 
       - name: Install backend deps
         working-directory: backend
         run: |
-          echo "PWD: C:\Users\Friends\Documents\online-learning-platform"
-          ls -la
           if [ -f package-lock.json ]; then npm ci || npm install; else npm install; fi
+          echo "backend deps installed"
+
+      - name: Validate frontend build exists
+        run: |
+          if [ ! -d "frontend/dist" ]; then
+            echo "::error ::frontend/dist not found — frontend build failed" && exit 1
+          fi
