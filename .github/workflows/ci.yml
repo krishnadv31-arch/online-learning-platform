@@ -1,0 +1,38 @@
+﻿name: CI Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+
+      - name: Build Frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Install Backend Dependencies
+        working-directory: backend
+        run: |
+          npm ci || npm install
+
+      - name: Verify Frontend Build Output
+        run: |
+          if [ ! -d "frontend/dist" ]; then
+            echo "❌ frontend/dist not found — frontend build failed"; exit 1;
+          fi
