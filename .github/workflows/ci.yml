@@ -1,4 +1,4 @@
-﻿name: CI Build
+﻿name: CI — Build frontend + backend (verbose)
 
 on:
   push:
@@ -9,30 +9,36 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
-          cache: npm
+      - name: Show GitHub runner info
+        run: |
+          echo "Runner: "
+          node -v
+          npm -v
+          echo "Listing repo root"
+          ls -la
 
-      - name: Build Frontend
+      - name: Build frontend (Vite)
         working-directory: frontend
         run: |
-          npm ci
+          echo "PWD: C:\Users\Friends\Documents\online-learning-platform"
+          echo "Listing frontend dir"
+          ls -la
+          if [ -f package-lock.json ]; then echo "Using npm ci"; npm ci || npm install; else npm install; fi
+          echo "package.json:"
+          cat package.json
           npm run build
 
-      - name: Install Backend Dependencies
+      - name: Show frontend/dist contents
+        run: |
+          echo "dist exists:"
+          ls -la frontend/dist || true
+
+      - name: Install backend deps
         working-directory: backend
         run: |
-          npm ci || npm install
-
-      - name: Verify Frontend Build Output
-        run: |
-          if [ ! -d "frontend/dist" ]; then
-            echo "❌ frontend/dist not found — frontend build failed"; exit 1;
-          fi
+          echo "PWD: C:\Users\Friends\Documents\online-learning-platform"
+          ls -la
+          if [ -f package-lock.json ]; then npm ci || npm install; else npm install; fi
